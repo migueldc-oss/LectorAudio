@@ -37,3 +37,6 @@ envía ningún archivo a Internet.
 | Espacio | Play / Pausa del audio |
 | B | Añadir marcador |
 | F | Pantalla completa |
+
+## Acceso a la web
+(https://migueldc-oss.github.io/LectorAudio)
