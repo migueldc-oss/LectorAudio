@@ -39,4 +39,4 @@ envía ningún archivo a Internet.
 | F | Pantalla completa |
 
 ## Acceso a la web
-(https://migueldc-oss.github.io/LectorAudio)
+https://migueldc-oss.github.io/LectorAudio
