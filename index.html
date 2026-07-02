@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lector EPUB + Audio</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-theme="light">
+  <!-- ====================== BARRA SUPERIOR ====================== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button id="btn-toc" class="icon-btn" title="Tabla de contenidos" aria-label="Tabla de contenidos">☰</button>
+      <span class="app-title">📖 Lector EPUB + Audio</span>
+    </div>
+
+    <div class="topbar-center">
+      <label class="file-btn" title="Abrir libro EPUB">
+        📂 Abrir EPUB
+        <input type="file" id="epub-input" accept=".epub,application/epub+zip" hidden />
+      </label>
+      <span id="book-meta" class="book-meta"></span>
+    </div>
+
+    <div class="topbar-right">
+      <button id="btn-bookmarks" class="icon-btn" title="Marcadores" aria-label="Marcadores">🔖</button>
+      <button id="btn-add-bookmark" class="icon-btn" title="Añadir marcador" aria-label="Añadir marcador">➕</button>
+      <button id="btn-search" class="icon-btn" title="Buscar en el libro" aria-label="Buscar">🔍</button>
+      <button id="btn-settings" class="icon-btn" title="Ajustes de lectura" aria-label="Ajustes">⚙️</button>
+      <button id="btn-fullscreen" class="icon-btn" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+    </div>
+  </header>
+
+  <!-- ====================== CONTENEDOR PRINCIPAL ====================== -->
+  <main class="layout">
+    <!-- ---------- PANEL LATERAL (TOC / Marcadores / Búsqueda) ---------- -->
+    <aside id="sidebar" class="sidebar" aria-hidden="true">
+      <div class="sidebar-header">
+        <span id="sidebar-title">Tabla de contenidos</span>
+        <button id="btn-close-sidebar" class="icon-btn" aria-label="Cerrar panel">✕</button>
+      </div>
+
+      <!-- Búsqueda -->
+      <div id="panel-search" class="sidebar-panel" hidden>
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Buscar texto..." />
+          <button id="btn-do-search" class="btn-sm">Buscar</button>
+        </div>
+        <ul id="search-results" class="list"></ul>
+      </div>
+
+      <!-- TOC -->
+      <div id="panel-toc" class="sidebar-panel">
+        <ul id="toc-list" class="list"></ul>
+      </div>
+
+      <!-- Marcadores -->
+      <div id="panel-bookmarks" class="sidebar-panel" hidden>
+        <ul id="bookmark-list" class="list"></ul>
+        <p id="bookmark-empty" class="empty-hint">No hay marcadores todavía.</p>
+      </div>
+
+      <!-- Libros recientes -->
+      <div class="sidebar-section">
+        <h4>Libros recientes</h4>
+        <ul id="recent-list" class="list recent"></ul>
+      </div>
+    </aside>
+
+    <!-- ---------- ZONA LECTOR (grande) ---------- -->
+    <section class="reader-zone">
+      <div id="drop-overlay" class="drop-overlay">Suelta aquí tu archivo .epub</div>
+
+      <div id="welcome" class="welcome">
+        <h1>📖 Bienvenido</h1>
+        <p>Abre un libro EPUB para empezar a leer.</p>
+        <p>Puedes pulsar <strong>📂 Abrir EPUB</strong> o arrastrar el archivo aquí.</p>
+      </div>
+
+      <div id="viewer" class="viewer"></div>
+
+      <!-- Navegación del lector -->
+      <button id="prev-page" class="nav-arrow nav-prev" title="Página anterior" aria-label="Página anterior">‹</button>
+      <button id="next-page" class="nav-arrow nav-next" title="Página siguiente" aria-label="Página siguiente">›</button>
+
+      <div class="reader-footer">
+        <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1" aria-label="Progreso de lectura" />
+        <span id="progress-label" class="progress-label">0%</span>
+      </div>
+    </section>
+
+    <!-- ---------- ZONA AUDIO (pequeña) ---------- -->
+    <aside id="audio-panel" class="audio-zone">
+      <div class="audio-header">
+        <span>🎵 Audio</span>
+        <button id="btn-collapse-audio" class="icon-btn" title="Colapsar/expandir" aria-label="Colapsar panel de audio">▾</button>
+      </div>
+
+      <div id="audio-body" class="audio-body">
+        <label class="file-btn block" title="Abrir archivos MP3">
+          🎼 Añadir MP3
+          <input type="file" id="audio-input" accept="audio/mpeg,.mp3,audio/*" multiple hidden />
+        </label>
+
+        <div id="audio-drop" class="audio-drop">Arrastra MP3 aquí</div>
+
+        <div class="now-playing">
+          <span id="track-title" class="track-title">Sin pista cargada</span>
+        </div>
+
+        <div class="seek-row">
+          <span id="cur-time">0:00</span>
+          <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1" aria-label="Posición de reproducción" />
+          <span id="dur-time">0:00</span>
+        </div>
+
+        <div class="controls">
+          <button id="a-prev" class="ctrl-btn" title="Pista anterior" aria-label="Pista anterior">⏮</button>
+          <button id="a-back" class="ctrl-btn" title="Atrás 10s" aria-label="Retroceder 10 segundos">⏪</button>
+          <button id="a-play" class="ctrl-btn play" title="Reproducir/Pausa" aria-label="Reproducir o pausar">▶</button>
+          <button id="a-fwd" class="ctrl-btn" title="Adelante 10s" aria-label="Adelantar 10 segundos">⏩</button>
+          <button id="a-next" class="ctrl-btn" title="Pista siguiente" aria-label="Pista siguiente">⏭</button>
+        </div>
+
+        <div class="audio-options">
+          <div class="opt-row">
+            <label for="speed-select">Velocidad</label>
+            <select id="speed-select">
+              <option value="0.5">0,5×</option>
+              <option value="0.6">0,6×</option>
+              <option value="0.7">0,7×</option>
+              <option value="0.8">0,8×</option>
+              <option value="0.9">0,9×</option>
+              <option value="1" selected>1,0×</option>
+            </select>
+          </div>
+
+          <div class="opt-row">
+            <label for="volume-slider">🔊</label>
+            <input type="range" id="volume-slider" min="0" max="1" value="1" step="0.01" aria-label="Volumen" />
+            <button id="a-mute" class="icon-btn" title="Silenciar" aria-label="Silenciar">🔊</button>
+          </div>
+
+          <div class="opt-row">
+            <button id="a-repeat" class="toggle-btn" title="Repetir" aria-pressed="false">🔁 Repetir</button>
+            <button id="a-shuffle" class="toggle-btn" title="Aleatorio" aria-pressed="false">🔀 Aleatorio</button>
+          </div>
+        </div>
+
+        <div class="playlist-wrap">
+          <h4>Lista de reproducción</h4>
+          <ul id="playlist" class="list playlist"></ul>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ====================== PANEL DE AJUSTES DE LECTURA ====================== -->
+  <div id="settings-modal" class="modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚙️ Ajustes de lectura</h3>
+        <button id="btn-close-settings" class="icon-btn" aria-label="Cerrar">✕</button>
+      </div>
+
+      <div class="setting">
+        <label>Tema</label>
+        <div class="theme-buttons">
+          <button class="theme-opt" data-theme-set="light">Claro</button>
+          <button class="theme-opt" data-theme-set="sepia">Sepia</button>
+          <button class="theme-opt" data-theme-set="dark">Oscuro</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <label for="font-family">Tipografía</label>
+        <select id="font-family">
+          <option value="Georgia, 'Times New Roman', serif">Serif (Georgia)</option>
+          <option value="-apple-system, 'Segoe UI', Roboto, Arial, sans-serif">Sans-serif</option>
+          <option value="'Courier New', monospace">Monoespaciada</option>
+          <option value="OpenDyslexic, Comic Sans MS, sans-serif">Dislexia (OpenDyslexic)</option>
+        </select>
+      </div>
+
+      <div class="setting">
+        <label>Tamaño de letra: <span id="font-size-val">100</span>%</label>
+        <div class="inline">
+          <button id="font-dec" class="btn-sm">A−</button>
+          <input type="range" id="font-size" min="60" max="220" value="100" step="5" />
+          <button id="font-inc" class="btn-sm">A+</button>
+        </div>
+      </div>
+
+      <div class="setting">
+        <label>Interlineado: <span id="line-h-val">1.5</span></label>
+        <input type="range" id="line-height" min="1" max="2.4" value="1.5" step="0.1" />
+      </div>
+
+      <div class="setting">
+        <label>Ancho de margen: <span id="margin-val">20</span></label>
+        <input type="range" id="margin-size" min="0" max="120" value="20" step="5" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== LIBRERÍAS LOCALES (offline) ====================== -->
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/epub.min.js"></script>
+  <!-- ====================== LÓGICA DE LA APP ====================== -->
+  <script src="js/storage.js"></script>
+  <script src="js/reader.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
